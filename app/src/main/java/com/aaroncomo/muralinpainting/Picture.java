@@ -65,7 +65,7 @@ public class Picture extends Activity {
             }
         };
 
-        // 隐藏进度条，启用监听按键
+        // 隐藏进度条，启用部件监听
         progressBar1.setVisibility(View.INVISIBLE);
         progressBar.setVisibility(View.INVISIBLE);
         buttonListener(imageView);

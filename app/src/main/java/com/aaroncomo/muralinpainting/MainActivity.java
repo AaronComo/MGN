@@ -24,8 +24,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void startPicture() {
-        startActivity(intentPicture);
-    }   // 页面跳转
+            startActivity(intentPicture);   // 页面跳转
+    }
 
     public void doEnd() {
         finish();
