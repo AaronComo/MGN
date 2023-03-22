@@ -1,4 +1,4 @@
-package com.example.muralinpainting;
+package com.aaroncomo.muralinpainting;
 
 import org.junit.Test;
 

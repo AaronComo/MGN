@@ -1,9 +1,11 @@
-package com.example.muralinpainting;
+package com.aaroncomo.muralinpainting;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+
+import com.example.muralinpainting.R;
 
 public class MainActivity extends AppCompatActivity {
     private Intent intentPicture;
