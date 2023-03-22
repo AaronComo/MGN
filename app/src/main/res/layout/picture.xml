@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background1">
+
+    <ImageView
+        android:id="@+id/picture"
+        android:layout_width="350dp"
+        android:layout_height="350dp"
+        android:layout_above="@+id/pictureSave"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="-450dp" />
+
+    <Button
+        android:id="@+id/inpainting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="550dp"
+        android:text="@string/inpainting"
+        android:textSize="20sp" />
+
+    <Button
+        android:id="@+id/pictureSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="80dp"
+        android:layout_marginTop="550dp"
+        android:layout_toEndOf="@+id/inpainting"
+        android:text="@string/save"
+        android:textSize="20sp" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:progressBarStyleHorizontal"
+        android:layout_centerHorizontal="true"
+        android:layout_width="250dp"
+        android:layout_height="6dp"
+        android:layout_below="@+id/pictureSave"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="50dp"
+        android:progressDrawable="@drawable/progressbar" />
+
+    <ProgressBar
+        android:id="@+id/progressBar1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/pictureSave"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="-300dp"
+        android:indeterminateTint="@android:color/holo_blue_light"
+        />
+</RelativeLayout>

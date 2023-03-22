@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Mural Inpainting</string>
+    <string name="input_hint">输入文字</string>
+    <string name="bottom">点按开始</string>
+    <string name="inpainting">开始修复</string>
+    <string name="save">保存图像</string>
+</resources>
