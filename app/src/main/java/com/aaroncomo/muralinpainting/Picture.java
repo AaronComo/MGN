@@ -15,6 +15,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -27,6 +28,20 @@ import androidx.core.content.ContextCompat;
 
 import com.example.muralinpainting.R;
 
+import org.apache.http.conn.ConnectTimeoutException;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.util.Objects;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 public class Picture extends Activity {
     private Button pictureSave, inpainting;
     private ProgressBar progressBar, progressBar1;
@@ -35,6 +50,9 @@ public class Picture extends Activity {
     private int progress = 0;
     private Boolean moduleOn = false;
     public static final int CHOOSE_PHOTO = 2;
+    private String realPath = null;
+    private final String ip = "120.78.130.95";
+    private final String port = "8005";
 
     @SuppressLint("HandlerLeak")
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,8 +97,10 @@ public class Picture extends Activity {
 
     public void buttonListener(View view) {
         // 动态申请文件读写权限
-        if (ContextCompat.checkSelfPermission(Picture.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(Picture.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        if (ContextCompat.checkSelfPermission(Picture.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(Picture.this, new String[] {
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         }
         view.setOnClickListener(v -> openAlbum());
     }
@@ -95,7 +115,10 @@ public class Picture extends Activity {
             new Thread(new Runnable() {     // AI模型线程
                 @Override
                 public void run() {
-                    moduleStart();
+                    if (!Objects.equals(realPath, null)) {
+                        uploadImage(new File(realPath));   // 获取真实路径上的文件，上传服务器
+                        moduleStart();
+                    }
                 }
 
                 private void moduleStart() {    // 调用模型
@@ -119,6 +142,7 @@ public class Picture extends Activity {
     }
 
     private void openAlbum() {
+        realPath = null;
         Intent intent = new Intent("android.intent.action.GET_CONTENT");
         intent.setType("image/*");
         startActivityForResult(intent, CHOOSE_PHOTO);   //打开相册
@@ -149,7 +173,8 @@ public class Picture extends Activity {
                 imagePath = getImagePath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection);
             }
             else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
-                Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.parseLong(docId));
+                Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"),
+                        Long.parseLong(docId));
                 imagePath = getImagePath(contentUri, null);
             }
         }
@@ -183,6 +208,7 @@ public class Picture extends Activity {
             Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
             imageView.setBackground(null);
             imageView.setImageBitmap(bitmap);
+            realPath = imagePath;
         }
         else {
             Toast.makeText(this, "failed to get image", Toast.LENGTH_SHORT).show();
@@ -192,4 +218,55 @@ public class Picture extends Activity {
     private void saveImage() {
         Toast.makeText(Picture.this, "成功保存到系统相册！", Toast.LENGTH_SHORT).show();
     }
+
+    private void uploadImage(File img) {
+        // 创建请求体
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)//请求类型
+                .addFormDataPart("name", img.getName())    // 图片名称
+                .addFormDataPart("uploadfile", "uploadfile", RequestBody.create(MediaType.parse("*/*"), img)) // 第一个参数传到服务器的字段名，第二个你自己的文件名，第三个MediaType.parse("*/*")数据类型，这个是所有类型的意思
+                .build();
+        // 调用工具类上传图片以及参数
+        HttpUtil.uploadFile("http://" + ip + ":" + port +  "/ServerHandler/upload", requestBody, new Callback() {
+            //请求失败回调函数
+//            @Override
+//            public void onFailure(Call call, IOException e) {
+//                if (e instanceof SocketTimeoutException) {
+//                    // 重新提交验证   在这里最好限制提交次数
+//                    HttpUtil.client.connectionPool().evictAll();
+////                    HttpUtil.client.newCall(call.request()).enqueue(this);
+//                } else {
+//                    System.out.println("=============");
+//                    System.out.println("异常: ");
+//                    e.printStackTrace();
+//                    System.out.println("=============");
+//                }
+//            }
+            @Override
+            public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                System.out.println("=============");
+                System.out.println("异常: ");
+                e.printStackTrace();
+                System.out.println("=============");
+            }
+
+            // 请求成功响应函数
+            @Override
+            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                showResponse();//在主线程中显示提示框
+            }
+        });
+    }
+
+    //ui操作，提示框
+    private void showResponse() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                // 在这里进行UI操作，将结果显示到界面上
+                Toast.makeText(Picture.this, "上传完成", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 }
