@@ -6,10 +6,27 @@
     <!--    读写-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <!--    网络-->
-    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 开启网络访问权限 -->
+    <uses-permission android:name="android.permission.INTERNET">
+    </uses-permission>
+
+    <!-- 允许访问网络状态的权限 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <!-- 允许访问wifi状态的权限 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <!-- 允许修改网络状态的权限 -->
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE">
+    </uses-permission>
+
+    <!-- 允许修改wifi状态的权限 -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+
 
     <application
+        android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

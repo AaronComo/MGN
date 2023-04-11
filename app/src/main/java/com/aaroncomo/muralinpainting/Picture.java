@@ -28,7 +28,6 @@ import androidx.core.content.ContextCompat;
 
 import com.example.muralinpainting.R;
 
-import org.apache.http.conn.ConnectTimeoutException;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,6 +52,7 @@ public class Picture extends Activity {
     private String realPath = null;
     private final String ip = "120.78.130.95";
     private final String port = "8005";
+    private String localFile = null, remoteFile = null, fileName = null;
 
     @SuppressLint("HandlerLeak")
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,14 +71,17 @@ public class Picture extends Activity {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 super.handleMessage(msg);
-                if (msg.what == 0x10) {
+                if (msg.what == 0x10) { // 更新上传进度条
                     progressBar.setProgress(progress);
                 }
-                else {
-                    Toast.makeText(Picture.this, "修复完成！", Toast.LENGTH_SHORT).show();
-                    progressBar.setVisibility(View.GONE);
-                    progressBar1.setVisibility(View.GONE);
+                else if (msg.what == 0x12) {
+                    progressBar1.setVisibility(View.GONE);  // 圆形进度条结束
                     moduleOn = false;   // 复位
+                    Toast.makeText(Picture.this, "修复完成！", Toast.LENGTH_SHORT).show();
+                }
+                else { // 0x11 上传进度条结束
+                    Toast.makeText(Picture.this, "上传成功，正在修复中...", Toast.LENGTH_SHORT).show();
+                    progressBar.setVisibility(View.GONE);
                 }
             }
         };
@@ -106,7 +109,7 @@ public class Picture extends Activity {
     }
 
     private void startModule() {
-        if (!moduleOn) {    // 防止多次创建进程
+        if (!moduleOn && realPath != null) {    // 防止多次创建进程
             moduleOn = true;
             progress = 0;
             progressBar.setProgress(progress);
@@ -116,17 +119,50 @@ public class Picture extends Activity {
                 @Override
                 public void run() {
                     if (!Objects.equals(realPath, null)) {
+                        runBar();
                         uploadImage(new File(realPath));   // 获取真实路径上的文件，上传服务器
-                        moduleStart();
+                        while (!waitForResult());   // 等待模型结果
+                        realPath = null;
                     }
                 }
 
-                private void moduleStart() {    // 调用模型
+                private boolean waitForResult(){
+                    SSHUtils utils = new SSHUtils();
+//                    utils.exec("sh /home/ServerHandler/run_module.sh"); // 调用模型
+                    utils.clean();
+                    try {
+                        do {
+                            utils.exec("ls /home/ServerHandler/output");
+                            Thread.sleep(5000);
+                        } while (utils.getReturnLength() == 0); // 阻塞线程，直到输出文件夹非空
+
+                        // 下载图片
+                        fileName = utils.getFile();
+                        remoteFile = "/home/ServerHandler/output".concat("/").concat(fileName);
+                        localFile = "/storage/emulated/0/Pictures";
+                        utils.download(remoteFile, localFile);
+
+                        // 更新ImageView
+                        msgHandler.sendEmptyMessage(0x12); // 模型调用结束，通知主线程禁用圆形进度条
+                        displayImage(localFile.concat("/").concat(fileName));
+
+                        // 清理输入输出文件夹，关闭连接
+                        utils.exec("rm ".concat(remoteFile));
+                        utils.exec("rm ".concat("/home/generate/static/images/*"));
+                        utils.closeConnection();
+                        return true;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    return false;
+                }
+
+                private void runBar() {    // 由于okhttp3的bug，回调函数总会返回timeout，只能模拟上传进度
                     for (int i = 0; i < 100; i++) {
                         try {
                             progress = i;
                             msgHandler.sendEmptyMessage(0x10);
-                            Thread.sleep(20);
+                            Thread.sleep(10);
                         } catch (InterruptedException e) {
                             Toast.makeText(Picture.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                             e.printStackTrace();
@@ -137,7 +173,12 @@ public class Picture extends Activity {
             }).start();
         }
         else {
-            Toast.makeText(Picture.this, "模型正在使用中...", Toast.LENGTH_SHORT).show();
+            if (realPath == null) {
+                Toast.makeText(Picture.this, "请重新选择图像", Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(Picture.this, "模型正在使用中...", Toast.LENGTH_SHORT).show();
+
+            }
         }
     }
 
@@ -216,7 +257,19 @@ public class Picture extends Activity {
     }
 
     private void saveImage() {
-        Toast.makeText(Picture.this, "成功保存到系统相册！", Toast.LENGTH_SHORT).show();
+        if (fileName != null) {
+            File file = new File(localFile.concat("/").concat(fileName));
+            boolean ret = file.renameTo(new File("/storage/emulated/0/DCIM/".concat(fileName).replaceFirst(".png", "").concat("_generated.png")));
+            if (ret) {
+                fileName = localFile = remoteFile = null;   // 清空数据
+                Toast.makeText(Picture.this, "成功保存到系统相册！", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                Toast.makeText(Picture.this, "保存失败！", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(Picture.this, "图片已经保存！", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void uploadImage(File img) {
@@ -229,19 +282,6 @@ public class Picture extends Activity {
         // 调用工具类上传图片以及参数
         HttpUtil.uploadFile("http://" + ip + ":" + port +  "/ServerHandler/upload", requestBody, new Callback() {
             //请求失败回调函数
-//            @Override
-//            public void onFailure(Call call, IOException e) {
-//                if (e instanceof SocketTimeoutException) {
-//                    // 重新提交验证   在这里最好限制提交次数
-//                    HttpUtil.client.connectionPool().evictAll();
-////                    HttpUtil.client.newCall(call.request()).enqueue(this);
-//                } else {
-//                    System.out.println("=============");
-//                    System.out.println("异常: ");
-//                    e.printStackTrace();
-//                    System.out.println("=============");
-//                }
-//            }
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
                 System.out.println("=============");
@@ -253,18 +293,7 @@ public class Picture extends Activity {
             // 请求成功响应函数
             @Override
             public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                showResponse();//在主线程中显示提示框
-            }
-        });
-    }
-
-    //ui操作，提示框
-    private void showResponse() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // 在这里进行UI操作，将结果显示到界面上
-                Toast.makeText(Picture.this, "上传完成", Toast.LENGTH_SHORT).show();
+//                showResponse();//在主线程中显示提示框
             }
         });
     }
