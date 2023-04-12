@@ -15,7 +15,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -31,7 +30,7 @@ import com.example.muralinpainting.R;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.Objects;
 
 import okhttp3.Call;
@@ -48,10 +47,10 @@ public class Picture extends Activity {
     private Handler msgHandler;
     private int progress = 0;
     private Boolean moduleOn = false;
-    public static final int CHOOSE_PHOTO = 2;
     private String realPath = null;
-    private final String ip = "120.78.130.95";
-    private final String port = "8005";
+    public static final int CHOOSE_PHOTO = 2;
+    private static final String ip = "120.78.130.95";
+    private static final String port = "8005";
     private String localFile = null, remoteFile = null, fileName = null;
 
     @SuppressLint("HandlerLeak")
@@ -127,26 +126,50 @@ public class Picture extends Activity {
                 }
 
                 private boolean waitForResult(){
-                    SSHUtils utils = new SSHUtils();
-                    utils.exec("sh /home/ServerHandler/run_module.sh"); // 调用模型
+                    String[] dirs = {
+                            "/home/Serverhandler/",
+                            "/storage/emulated/0/",
+                            "/home/generate/static/",
+                    };
+                    String[] targetDir = { "output", "cache" };
+                    int hit = 0;
+                    SSHUtils utils = new SSHUtils();    // 新建连接
+
+                    // 先读缓存，有的话直接下载
+                    utils.exec("ls ".concat(targetDir[1]).concat(targetDir[hit]));
                     utils.log();
-                    try {
-                        Thread.sleep(40000);    // 等待模型执行，减少query
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                    String name = realPath.substring(realPath.lastIndexOf("/") + 1); // 需要query的文件名
+                    Object[] ret = utils.getOutput();
+                    for (Object r : ret) {  // TODO: 格式可能不对
+                        if (name.equals(r)) {
+                            hit = 1;     // 缓存命中
+                            break;
+                        }
                     }
                     utils.clean();
+
+                    if (hit == 0) {     // 没有命中，调用模型
+                        utils.exec("sh ".concat(dirs[0]).concat("run_module.sh")); // 调用模型
+                        utils.log();
+                        try {
+                            Thread.sleep(40000);    // 等待模型执行，减少query
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        utils.clean();
+                    }
+
                     try {
                         do {
-                            utils.exec("ls /home/ServerHandler/output");
+                            utils.exec("ls ".concat(dirs[0]).concat(targetDir[hit]));
                             utils.log();
-                            Thread.sleep(1000);
+                            Thread.sleep(2500);
                         } while (utils.getReturnLength() == 0); // 阻塞线程，直到输出文件夹非空
 
                         // 下载图片
                         fileName = utils.getFile();
-                        remoteFile = "/home/ServerHandler/output".concat("/").concat(fileName);
-                        localFile = "/storage/emulated/0/Pictures";
+                        remoteFile = dirs[0].concat(targetDir[hit]).concat("/").concat(fileName);
+                        localFile = dirs[1].concat("Pictures");
                         utils.download(remoteFile, localFile);
 
                         // 更新ImageView
@@ -155,7 +178,7 @@ public class Picture extends Activity {
 
                         // 清理输入输出文件夹，关闭连接
                         utils.exec("rm ".concat(remoteFile));
-                        utils.exec("rm ".concat("/home/generate/static/images/*"));
+                        utils.exec("rm ".concat(dirs[2]).concat("images/*"));
                         utils.closeConnection();
                         return true;
                     } catch (Exception e) {

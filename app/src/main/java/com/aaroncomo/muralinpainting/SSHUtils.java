@@ -41,7 +41,7 @@ public class SSHUtils {
      * 执行脚本
      * @param cmd 要在linux上执行的指令
      */
-    public int exec(String cmd) {
+    public void exec(String cmd) {
         InputStream stdOut = null;
         InputStream stdErr = null;
         int ret = -1;
@@ -54,10 +54,8 @@ public class SSHUtils {
             stdOut = new StreamGobbler(session.getStdout());
             BufferedReader br = new BufferedReader(new InputStreamReader(stdOut));
             output = br.lines().toArray();
-
             //指令执行结束后的错误
             stdErr = new StreamGobbler(session.getStderr());
-
             //取得指令执行结束后的状态
             ret = (int) session.getExitStatus();
             System.out.println("exec ret: " + ret);
@@ -65,7 +63,6 @@ public class SSHUtils {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return ret;
     }
 
     /**
@@ -103,6 +100,10 @@ public class SSHUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public Object[] getOutput() {
+        return output;
     }
 
     public int getReturnLength() {
