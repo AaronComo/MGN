@@ -119,8 +119,8 @@ public class Picture extends Activity {
                 @Override
                 public void run() {
                     if (!Objects.equals(realPath, null)) {
-                        runBar();
                         uploadImage(new File(realPath));   // 获取真实路径上的文件，上传服务器
+                        runBar();
                         while (!waitForResult());   // 等待模型结果
                         realPath = null;
                     }
@@ -128,12 +128,19 @@ public class Picture extends Activity {
 
                 private boolean waitForResult(){
                     SSHUtils utils = new SSHUtils();
-//                    utils.exec("sh /home/ServerHandler/run_module.sh"); // 调用模型
+                    utils.exec("sh /home/ServerHandler/run_module.sh"); // 调用模型
+                    utils.log();
+                    try {
+                        Thread.sleep(40000);    // 等待模型执行，减少query
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                     utils.clean();
                     try {
                         do {
                             utils.exec("ls /home/ServerHandler/output");
-                            Thread.sleep(5000);
+                            utils.log();
+                            Thread.sleep(1000);
                         } while (utils.getReturnLength() == 0); // 阻塞线程，直到输出文件夹非空
 
                         // 下载图片

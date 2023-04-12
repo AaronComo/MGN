@@ -9,4 +9,5 @@
     <color name="white">#FFFFFFFF</color>
     <color name="transparent">#00000000</color>
     <color name="dark_blue">#FF333e52</color>
+    <color name="top_bar">#FFc7835b</color>
 </resources>

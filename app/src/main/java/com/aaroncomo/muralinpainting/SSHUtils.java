@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Vector;
 import ch.ethz.ssh2.*;
 
@@ -118,5 +119,9 @@ public class SSHUtils {
 
     public String getFile() {
         return output[0].toString();
+    }
+
+    public void log() {
+        System.out.println(Arrays.toString(output));
     }
 }

@@ -21,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void buttonListener() {
         findViewById(R.id.start).setOnClickListener(v -> startPicture());
+        findViewById(R.id.end).setOnClickListener(v -> doEnd());
     }
 
     public void startPicture() {
