@@ -127,7 +127,7 @@ public class Picture extends Activity {
 
                 private boolean waitForResult(){
                     String[] dirs = {
-                            "/home/Serverhandler/",
+                            "/home/ServerHandler/",
                             "/storage/emulated/0/",
                             "/home/generate/static/",
                     };
@@ -136,7 +136,7 @@ public class Picture extends Activity {
                     SSHUtils utils = new SSHUtils();    // 新建连接
 
                     // 先读缓存，有的话直接下载
-                    utils.exec("ls ".concat(targetDir[1]).concat(targetDir[hit]));
+                    utils.exec("ls ".concat(dirs[0]).concat(targetDir[1]));
                     utils.log();
                     String name = realPath.substring(realPath.lastIndexOf("/") + 1); // 需要query的文件名
                     Object[] ret = utils.getOutput();
@@ -167,7 +167,7 @@ public class Picture extends Activity {
                         } while (utils.getReturnLength() == 0); // 阻塞线程，直到输出文件夹非空
 
                         // 下载图片
-                        fileName = utils.getFile();
+                        fileName = (hit == 0) ? utils.getFile() : name;
                         remoteFile = dirs[0].concat(targetDir[hit]).concat("/").concat(fileName);
                         localFile = dirs[1].concat("Pictures");
                         utils.download(remoteFile, localFile);
@@ -177,8 +177,8 @@ public class Picture extends Activity {
                         displayImage(localFile.concat("/").concat(fileName));
 
                         // 清理输入输出文件夹，关闭连接
-                        utils.exec("rm ".concat(remoteFile));
                         utils.exec("rm ".concat(dirs[2]).concat("images/*"));
+                        utils.exec("rm ".concat(dirs[0]).concat("output/*"));
                         utils.closeConnection();
                         return true;
                     } catch (Exception e) {

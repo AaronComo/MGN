@@ -12,7 +12,7 @@ import ch.ethz.ssh2.*;
 public class SSHUtils {
     private static final String ip = "120.78.130.95";
     private static final String usr = "root";
-    private static final String passwd = "";
+    private static final String passwd = "WHUsty20030707";
     private static Connection conn;
     private static Object[] output;    // exec函数的返回结果
 
@@ -56,6 +56,11 @@ public class SSHUtils {
             output = br.lines().toArray();
             //指令执行结束后的错误
             stdErr = new StreamGobbler(session.getStderr());
+            br = new BufferedReader(new InputStreamReader(stdErr));
+            Object[] err = br.lines().toArray();
+            if (err.length != 0) {
+                System.out.println("exec error: ".concat(Arrays.toString(err)));
+            }
             //取得指令执行结束后的状态
             ret = (int) session.getExitStatus();
             System.out.println("exec ret: " + ret);
