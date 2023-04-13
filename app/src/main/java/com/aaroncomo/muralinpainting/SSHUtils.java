@@ -12,7 +12,7 @@ import ch.ethz.ssh2.*;
 public class SSHUtils {
     private static final String ip = "120.78.130.95";
     private static final String usr = "root";
-    private static final String passwd = "WHUsty20030707";
+    private static final String passwd = "";
     private static Connection conn;
     private static Object[] output;    // exec函数的返回结果
 
