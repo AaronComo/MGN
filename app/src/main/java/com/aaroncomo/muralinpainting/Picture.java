@@ -129,7 +129,6 @@ public class Picture extends Activity {
                     String[] dirs = {
                             "/home/ServerHandler/",
                             "/storage/emulated/0/",
-                            "/home/generate/static/",
                     };
                     String[] targetDir = { "output", "cache" };
                     int hit = 0;
@@ -140,7 +139,7 @@ public class Picture extends Activity {
                     utils.log();
                     String name = realPath.substring(realPath.lastIndexOf("/") + 1); // 需要query的文件名
                     Object[] ret = utils.getOutput();
-                    for (Object r : ret) {  // TODO: 格式可能不对
+                    for (Object r : ret) {
                         if (name.equals(r)) {
                             hit = 1;     // 缓存命中
                             break;
@@ -177,7 +176,7 @@ public class Picture extends Activity {
                         displayImage(localFile.concat("/").concat(fileName));
 
                         // 清理输入输出文件夹，关闭连接
-                        utils.exec("rm ".concat(dirs[2]).concat("images/*"));
+                        utils.exec("rm ".concat(dirs[0]).concat("images/*"));
                         utils.exec("rm ".concat(dirs[0]).concat("output/*"));
                         utils.closeConnection();
                         return true;
