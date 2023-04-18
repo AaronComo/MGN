@@ -288,7 +288,8 @@ public class Picture extends Activity {
     private void saveImage() {
         if (fileName != null) {
             File file = new File(localFile.concat("/").concat(fileName));
-            boolean ret = file.renameTo(new File("/storage/emulated/0/DCIM/".concat(fileName).replaceFirst(".png", "").concat("_generated.png")));
+            File dstFile = new File("/storage/emulated/0/DCIM/".concat(fileName).replaceFirst(".png", "").concat("_generated.png"));
+            boolean ret = file.renameTo(dstFile);
             if (ret) {
                 fileName = localFile = remoteFile = null;   // 清空数据
                 Toast.makeText(Picture.this, "成功保存到系统相册！", Toast.LENGTH_SHORT).show();

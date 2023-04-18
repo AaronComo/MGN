@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Mural Inpainting</string>
+    <string name="app_name">MGN</string>
     <string name="input_hint">输入文字</string>
     <string name="bottom">点按开始</string>
     <string name="inpainting">开始修复</string>

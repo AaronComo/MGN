@@ -22,6 +22,7 @@
         android:textSize="20sp" />
 
     <Button
+
         android:id="@+id/pictureSave"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -30,6 +31,7 @@
         android:layout_toEndOf="@+id/inpainting"
         android:text="@string/save"
         android:textSize="20sp" />
+
 
     <ProgressBar
         android:id="@+id/progressBar"
